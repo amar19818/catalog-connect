@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, MessageCircle } from "lucide-react";
+import { Eye, EyeOff, Store, Zap, Shield } from "lucide-react";
 import { toast } from "sonner";
 
 export default function LoginPage() {
@@ -26,7 +26,7 @@ export default function LoginPage() {
       } else {
         await register(username, email, password);
       }
-      toast.success(isLogin ? "Login successful!" : "Account created!");
+      toast.success(isLogin ? "Welcome back!" : "Account created!");
       navigate("/dashboard");
     } catch (err: any) {
       toast.error(err.message);
@@ -38,55 +38,64 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-sm space-y-8">
-        <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold text-primary">MyStoreLink</h1>
-          <div className="flex gap-4 justify-center">
-            <button
-              onClick={() => setIsLogin(true)}
-              className={`text-lg font-semibold pb-1 ${isLogin ? "text-foreground border-b-2 border-primary" : "text-muted-foreground"}`}
-            >
-              Login
-            </button>
-            <button
-              onClick={() => setIsLogin(false)}
-              className={`text-lg font-semibold pb-1 ${!isLogin ? "text-foreground border-b-2 border-primary" : "text-muted-foreground"}`}
-            >
-              Sign Up
-            </button>
+        {/* Logo */}
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto border border-primary/20">
+            <Store className="text-primary" size={28} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-extrabold text-primary tracking-tight">MyStoreLink</h1>
+            <p className="text-xs text-muted-foreground mt-1">Create your online store in minutes</p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Tabs */}
+        <div className="flex bg-secondary rounded-xl p-1">
+          <button
+            onClick={() => setIsLogin(true)}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${isLogin ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}
+          >
+            Login
+          </button>
+          <button
+            onClick={() => setIsLogin(false)}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${!isLogin ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}
+          >
+            Sign Up
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <div className="space-y-2">
-              <Label className="text-xs uppercase text-muted-foreground tracking-wider">Username</Label>
+              <Label className="text-[10px] uppercase text-muted-foreground tracking-widest">Username</Label>
               <Input
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 placeholder="Your name"
-                className="bg-secondary border-border"
+                className="bg-card border-border/50 rounded-xl h-11"
                 required={!isLogin}
               />
             </div>
           )}
 
           <div className="space-y-2">
-            <Label className="text-xs uppercase text-muted-foreground tracking-wider">Store Owner Email</Label>
+            <Label className="text-[10px] uppercase text-muted-foreground tracking-widest">Email Address</Label>
             <Input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="owner@store.com"
-              className="bg-secondary border-border"
+              placeholder="you@example.com"
+              className="bg-card border-border/50 rounded-xl h-11"
               required
             />
           </div>
 
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <Label className="text-xs uppercase text-muted-foreground tracking-wider">Access Password</Label>
+              <Label className="text-[10px] uppercase text-muted-foreground tracking-widest">Password</Label>
               {isLogin && (
-                <button type="button" className="text-xs text-primary hover:underline">Forgot?</button>
+                <button type="button" className="text-[10px] text-primary hover:underline font-medium">Forgot?</button>
               )}
             </div>
             <div className="relative">
@@ -95,42 +104,50 @@ export default function LoginPage() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="bg-secondary border-border pr-10"
+                className="bg-card border-border/50 rounded-xl h-11 pr-10"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
 
-          <Button type="submit" className="w-full bg-primary text-primary-foreground h-12 text-base" disabled={loading}>
-            {loading ? "Please wait..." : isLogin ? "Get Started →" : "Create Account →"}
+          <Button type="submit" className="w-full bg-primary text-primary-foreground h-12 text-base rounded-xl font-bold hover:opacity-90 active:scale-[0.98] transition-all" disabled={loading}>
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <span className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                Please wait...
+              </span>
+            ) : isLogin ? "Get Started →" : "Create Account →"}
           </Button>
         </form>
 
-        <div className="text-center space-y-4">
-          <p className="text-xs text-muted-foreground">Or continue with enterprise SSO</p>
-          <div className="flex justify-center gap-3">
-            <button className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
-              <span className="text-sm">G</span>
-            </button>
-            <button className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
-              <span className="text-sm">🍎</span>
-            </button>
-          </div>
-          <p className="text-[10px] text-muted-foreground">
-            By continuing, you agree to our Terms of Conditions & Privacy Policy
-          </p>
+        {/* Features */}
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { icon: Zap, title: "Quick Setup", desc: "Launch in 2 min" },
+            { icon: Shield, title: "Secure", desc: "Your data is safe" },
+          ].map((f, i) => (
+            <div key={i} className="bg-card rounded-xl p-3 border border-border/30 flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <f.icon className="text-primary" size={14} />
+              </div>
+              <div>
+                <p className="text-xs font-semibold">{f.title}</p>
+                <p className="text-[10px] text-muted-foreground">{f.desc}</p>
+              </div>
+            </div>
+          ))}
         </div>
 
-        <button className="fixed bottom-6 right-6 bg-primary text-primary-foreground w-12 h-12 rounded-full flex items-center justify-center shadow-lg">
-          <MessageCircle size={20} />
-        </button>
+        <p className="text-center text-[10px] text-muted-foreground">
+          By continuing, you agree to our Terms & Privacy Policy
+        </p>
       </div>
     </div>
   );

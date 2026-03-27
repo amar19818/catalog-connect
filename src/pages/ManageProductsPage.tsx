@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
-import { Search, SlidersHorizontal, ArrowUpDown, Plus, Pencil, Trash2 } from "lucide-react";
+import { Search, SlidersHorizontal, ArrowUpDown, Plus, Pencil, Trash2, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ export default function ManageProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"all" | "instock" | "outofstock">("all");
 
   useEffect(() => {
     if (storeId) loadProducts();
@@ -60,128 +61,148 @@ export default function ManageProductsPage() {
     }
   };
 
-  const filtered = products.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = products
+    .filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+    .filter(p => {
+      if (filter === "instock") return p.inStock !== false;
+      if (filter === "outofstock") return p.inStock === false;
+      return true;
+    });
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <div className="p-4 flex items-center justify-between">
-        <h1 className="text-primary font-bold text-lg">MyStoreLink</h1>
-        <div className="w-8 h-8 rounded-full bg-primary" />
+      {/* Header */}
+      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border/50">
+        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate("/dashboard")} className="p-2 rounded-full hover:bg-secondary transition-colors">
+              <ArrowLeft size={20} />
+            </button>
+            <div>
+              <h1 className="text-lg font-extrabold">Products</h1>
+              <p className="text-[10px] text-muted-foreground">{products.length} total items</p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate(`/add-product/${storeId}`)}
+            className="bg-primary text-primary-foreground px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:opacity-90 active:scale-95 transition-all"
+          >
+            <Plus size={14} /> Add
+          </button>
+        </div>
       </div>
 
-      <div className="px-4 space-y-4">
-        <div>
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">Inventory Management</p>
-          <h2 className="text-2xl font-bold">Products</h2>
-          <p className="text-xs text-muted-foreground">Total Stock: {products.length} Items</p>
-        </div>
-
+      <div className="max-w-lg mx-auto px-4 space-y-4 mt-4">
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
           <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search product name, SKU or category..."
-            className="pl-10 bg-secondary border-border"
+            placeholder="Search products..."
+            className="pl-10 bg-card border-border/50 rounded-xl h-11"
           />
         </div>
 
         {/* Filters */}
         <div className="flex gap-2">
-          <button className="flex items-center gap-1.5 px-4 py-2 bg-secondary rounded-lg text-sm">
-            <SlidersHorizontal size={14} /> Filters
-          </button>
-          <button className="flex items-center gap-1.5 px-4 py-2 bg-secondary rounded-lg text-sm">
-            <ArrowUpDown size={14} /> Sort
-          </button>
+          {[
+            { id: "all" as const, label: "All" },
+            { id: "instock" as const, label: "In Stock" },
+            { id: "outofstock" as const, label: "Out of Stock" },
+          ].map(f => (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id)}
+              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${
+                filter === f.id
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                  : "bg-card text-muted-foreground border border-border/50"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
 
         {/* Product List */}
-        <div className="space-y-4">
-          {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading...</div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">No products found</div>
-          ) : (
-            filtered.map(product => (
-              <div key={product._id} className="bg-card rounded-xl overflow-hidden">
-                {/* Product Image */}
-                <div className="h-44 bg-secondary">
-                  {product.images?.[0]?.url ? (
-                    <img src={product.images[0].url} alt={product.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">No Image</div>
-                  )}
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-12">
+            <span className="text-4xl block mb-3">📦</span>
+            <p className="text-muted-foreground text-sm">No products found</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filtered.map(product => (
+              <div key={product._id} className="bg-card rounded-2xl overflow-hidden border border-border/30 hover:border-primary/20 transition-all">
+                <div className="flex gap-3 p-3">
+                  {/* Thumbnail */}
+                  <div className="w-20 h-20 bg-secondary rounded-xl overflow-hidden flex-shrink-0">
+                    {product.images?.[0]?.url ? (
+                      <img src={product.images[0].url} alt={product.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xl">🛒</div>
+                    )}
+                  </div>
+
+                  {/* Details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase">{product.category || "General"}</p>
+                        <h3 className="font-semibold text-sm truncate">{product.name}</h3>
+                      </div>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
+                        product.inStock !== false ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
+                      }`}>
+                        {product.inStock !== false ? "In Stock" : "Out"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-baseline gap-1.5 mt-1">
+                      <span className="text-base font-bold text-primary">₹{product.discountPrice || product.originalPrice}</span>
+                      {product.discountPrice && (
+                        <span className="text-[11px] text-muted-foreground line-through">₹{product.originalPrice}</span>
+                      )}
+                      {product.unit && <span className="text-[10px] text-muted-foreground ml-1">/ {product.unit}</span>}
+                    </div>
+                  </div>
                 </div>
 
-                <div className="p-4 space-y-3">
-                  <div>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{product.category || "General"}</p>
-                    <h3 className="font-semibold">{product.name}</h3>
-                    {product.sku && <p className="text-xs text-muted-foreground">SKU: {product.sku}</p>}
+                {/* Actions bar */}
+                <div className="px-3 py-2.5 bg-secondary/30 border-t border-border/20 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={product.inStock}
+                      onCheckedChange={() => toggleStock(product._id)}
+                      className="data-[state=checked]:bg-success scale-90"
+                    />
+                    <span className="text-[10px] text-muted-foreground">Stock</span>
                   </div>
-
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-lg font-bold text-primary">₹{product.discountPrice || product.originalPrice}</span>
-                    {product.discountPrice && (
-                      <span className="text-sm text-muted-foreground line-through">₹{product.originalPrice}</span>
-                    )}
-                    {product.unit && <span className="text-xs text-muted-foreground">/ {product.unit}</span>}
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={product.inStock}
-                          onCheckedChange={() => toggleStock(product._id)}
-                          className="data-[state=checked]:bg-primary"
-                        />
-                        <span className="text-xs text-muted-foreground">
-                          {product.inStock ? "In Stock" : "Out of Stock"}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => toggleVisibility(product._id)}
-                        className="w-8 h-8 bg-secondary rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground"
-                        title={product.isVisible ? "Hide" : "Show"}
-                      >
-                        {product.isVisible !== false ? "👁" : "🙈"}
-                      </button>
-                      <button
-                        onClick={() => navigate(`/edit-product/${product._id}`)}
-                        className="w-8 h-8 bg-secondary rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground"
-                      >
-                        <Pencil size={14} />
-                      </button>
-                      <button
-                        onClick={() => deleteProduct(product._id)}
-                        className="w-8 h-8 bg-secondary rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => toggleVisibility(product._id)}
+                      className="w-8 h-8 bg-card rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                      title={product.isVisible !== false ? "Hide" : "Show"}
+                    >
+                      {product.isVisible !== false ? <Eye size={14} /> : <EyeOff size={14} />}
+                    </button>
+                    <button
+                      onClick={() => deleteProduct(product._id)}
+                      className="w-8 h-8 bg-card rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </div>
               </div>
-            ))
-          )}
-        </div>
-
-        {/* Add Product Button */}
-        <button
-          onClick={() => navigate(`/add-product/${storeId}`)}
-          className="w-full bg-card border border-dashed border-border rounded-xl p-4 flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground hover:border-primary transition-colors"
-        >
-          <Plus size={16} />
-          <span className="text-sm">Add New Product</span>
-        </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <BottomNav active="products" storeId={storeId} />
